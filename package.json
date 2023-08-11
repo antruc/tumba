@@ -1,0 +1,41 @@
+{
+  "name": "tumba",
+  "version": "1.0.0",
+  "description": "Encrypt and Decrypt files using AES-GCM 256 with PBKDF2 derived keys",
+  "type": "module",
+  "bin": {
+    "tumba": "./bin/index.js"
+  },
+  "scripts": {
+    "prettier": "npx prettier bin lib --check",
+    "lint": "npx eslint bin lib",
+    "format": "npm run prettier -- --write && npm run lint -- --fix",
+    "test": "npm run prettier && npm run lint"
+  },
+  "dependencies": {
+    "file-type": "^18.5.0",
+    "inquirer": "^9.2.8",
+    "meow": "^12.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.46.0",
+    "eslint-config-prettier": "^8.10.0",
+    "prettier": "3.0.1"
+  },
+  "engines": {
+    "node": ">=16.20.1"
+  },
+  "keywords": [
+    "AES-GCM",
+    "PBKDF2",
+    "Webcrypto",
+    "CLI"
+  ],
+  "homepage": "https://github.com/antruc/tumba#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/antruc/tumba"
+  },
+  "author": "Antruc",
+  "license": "MIT"
+}
