@@ -1,6 +1,6 @@
 {
   "name": "tumba",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Encrypt and Decrypt files using AES-GCM 256 with PBKDF2 derived keys",
   "type": "module",
   "bin": {
@@ -13,17 +13,19 @@
     "test": "npm run prettier && npm run lint"
   },
   "dependencies": {
-    "file-type": "^18.5.0",
-    "inquirer": "^9.2.8",
-    "meow": "^12.0.1"
+    "file-type": "^20.5.0",
+    "inquirer": "^12.6.0",
+    "meow": "^13.2.0"
   },
   "devDependencies": {
-    "eslint": "^8.46.0",
-    "eslint-config-prettier": "^8.10.0",
-    "prettier": "3.0.1"
+    "@eslint/js": "^9.25.1",
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3"
   },
   "engines": {
-    "node": ">=16.20.1"
+    "node": ">=20.19.1"
   },
   "keywords": [
     "AES-GCM",
