@@ -4,7 +4,7 @@
   "description": "Encrypt and Decrypt files using AES-GCM 256 with PBKDF2 derived keys",
   "type": "module",
   "bin": {
-    "tumba": "./bin/index.js"
+    "tumba": "bin/index.js"
   },
   "scripts": {
     "prettier": "npx prettier bin lib --check",
@@ -37,7 +37,7 @@
   "homepage": "https://github.com/antruc/tumba#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/antruc/tumba"
+    "url": "git+https://github.com/antruc/tumba.git"
   },
   "author": "Antruc",
   "license": "MIT"
