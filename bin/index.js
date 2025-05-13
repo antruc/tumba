@@ -86,7 +86,7 @@ if (Object.hasOwn(cli.flags, 'encrypt') && cli.flags.encrypt.length > 0) {
   Object.hasOwn(cli.flags, 'decrypt') &&
   cli.flags.decrypt.length > 0
 ) {
-  const pathExist = existsSync(cli.flags.encrypt);
+  const pathExist = existsSync(cli.flags.decrypt);
   if (pathExist) {
     const isFile = lstatSync(cli.flags.decrypt).isFile();
     if (isFile) {
