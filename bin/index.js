@@ -1,7 +1,8 @@
 #! /usr/bin/env node
-import meow from 'meow'
-import inquirer from 'inquirer'
-import tumba from '../lib/tumba.js'
+import meow from 'meow';
+import { lstatSync } from 'node:fs';
+import inquirer from 'inquirer';
+import tumba from '../lib/tumba.js';
 
 const cli = meow(
   `
@@ -24,73 +25,100 @@ const cli = meow(
     flags: {
       encrypt: {
         type: 'string',
-        shortFlag: 'e'
+        shortFlag: 'e',
       },
       decrypt: {
         type: 'string',
-        shortFlag: 'd'
+        shortFlag: 'd',
       },
       iterations: {
         type: 'number',
         shortFlag: 'i',
-        default: 100000
+        default: 100000,
       },
       outDir: {
         type: 'string',
         shortFlag: 'o',
-        default: ''
-      }
-    }
-  }
-)
+        default: '',
+      },
+    },
+  },
+);
 
+// Check if the necessary flags are set and if there is a valid input
 if (Object.hasOwn(cli.flags, 'encrypt') && cli.flags.encrypt.length > 0) {
-  inquirer
-    .prompt([
-      {
-        message: 'Password:',
-        name: 'password',
-        type: 'password',
-        mask: true
-      }
-    ])
-    .then((answer) => {
-      if (answer.password.length > 0) {
-        tumba.encrypt(
-          cli.flags.encrypt,
-          answer.password,
-          cli.flags.iterations,
-          cli.flags.outDir
-        )
-      } else {
-        console.log('Password length must be greater than zero')
-      }
-    })
+  const isFile = lstatSync(cli.flags.encrypt).isFile();
+  // Check if path is a file
+  if (isFile) {
+    inquirer
+      .prompt([
+        {
+          message: 'Password:',
+          name: 'password',
+          type: 'password',
+          mask: true,
+        },
+      ])
+      .then((answer) => {
+        // Check if password string is not empty
+        if (answer.password.length > 0) {
+          // Encrypt file
+          tumba.encrypt(
+            cli.flags.encrypt,
+            answer.password,
+            cli.flags.iterations,
+            cli.flags.outDir,
+          );
+        } else {
+          console.log('Error: Password length must be greater than zero');
+        }
+      });
+  } else {
+    console.log('Error: Path must be a file');
+  }
 } else if (
   Object.hasOwn(cli.flags, 'decrypt') &&
   cli.flags.decrypt.length > 0
 ) {
-  inquirer
-    .prompt([
-      {
-        message: 'Password:',
-        name: 'password',
-        type: 'password',
-        mask: true
-      }
-    ])
-    .then((answer) => {
-      if (answer.password.length > 0) {
-        tumba.decrypt(
-          cli.flags.decrypt,
-          answer.password,
-          cli.flags.iterations,
-          cli.flags.outDir
-        )
-      } else {
-        console.log('Password length must be greater than zero')
-      }
-    })
+  const isFile = lstatSync(cli.flags.decrypt).isFile();
+  if (isFile) {
+    // Check if file includes '.tumba'
+    if (cli.flags.decrypt.includes('.tumba')) {
+      inquirer
+        .prompt([
+          {
+            message: 'Password:',
+            name: 'password',
+            type: 'password',
+            mask: true,
+          },
+        ])
+        .then((answer) => {
+          // Decrypt file
+          tumba.decrypt(
+            cli.flags.decrypt,
+            answer.password,
+            cli.flags.iterations,
+            cli.flags.outDir,
+          );
+        });
+    } else {
+      console.log('Error: File must be encrypted');
+    }
+  } else {
+    console.log('Error: Path must be a file');
+  }
 } else {
-  console.log(cli.help)
+  // Else show help message
+  console.log(cli.help);
 }
+
+// Exit if process is terminated
+process.on('uncaughtException', (error) => {
+  if (error instanceof Error && error.name === 'ExitPromptError') {
+    console.log('Process cancelled');
+  } else {
+    // Else rethrow unknown errors
+    throw error;
+  }
+});
