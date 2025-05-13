@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/tumba)](https://www.npmjs.com/package/tumba)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-> Tomb *(noun)*: A vault or chamber for burial of the dead.
+> Tomb *(noun)*: A vault or chamber for burial of the dead
 
 Encrypt and Decrypt files using AES-GCM 256 with PBKDF2 derived keys
 
