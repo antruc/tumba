@@ -10,7 +10,7 @@
     "prettier": "npx prettier bin lib --check",
     "lint": "npx eslint bin lib",
     "format": "npm run prettier -- --write && npm run lint -- --fix",
-    "test": "npm run prettier && npm run lint"
+    "test": "vitest"
   },
   "dependencies": {
     "file-type": "^20.5.0",
@@ -23,7 +23,8 @@
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",
     "globals": "^16.0.0",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20.19.1"
