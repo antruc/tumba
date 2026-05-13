@@ -34,7 +34,12 @@ describe('AES module', () => {
   it('should decrypt what it encrypts', async () => {
     const plaintext = encoder.encode('super secret message');
 
-    const { iv, cipher } = await aes.encrypt(plaintext, password, salt, iterations);
+    const { iv, cipher } = await aes.encrypt(
+      plaintext,
+      password,
+      salt,
+      iterations,
+    );
     const combined = Buffer.concat([Buffer.from(iv), Buffer.from(cipher)]);
 
     const decrypted = await aes.decrypt(combined, password, salt, iterations);
@@ -44,11 +49,17 @@ describe('AES module', () => {
 
   it('should fail decryption with wrong password', async () => {
     const plaintext = encoder.encode('secret');
-    const { iv, cipher } = await aes.encrypt(plaintext, password, salt, iterations);
+    const { iv, cipher } = await aes.encrypt(
+      plaintext,
+      password,
+      salt,
+      iterations,
+    );
     const combined = Buffer.concat([Buffer.from(iv), Buffer.from(cipher)]);
 
-    await expect(aes.decrypt(combined, 'wrong-password', salt, iterations))
-      .rejects.toThrow();
+    await expect(
+      aes.decrypt(combined, 'wrong-password', salt, iterations),
+    ).rejects.toThrow();
   });
 
   it('should generate random IVs for each encryption', async () => {
@@ -64,12 +75,22 @@ describe('AES module', () => {
     const plaintext = encoder.encode('test message');
 
     // Encrypt/decrypt first time
-    const { iv: iv1, cipher: cipher1 } = await aes.encrypt(plaintext, password, salt, iterations);
+    const { iv: iv1, cipher: cipher1 } = await aes.encrypt(
+      plaintext,
+      password,
+      salt,
+      iterations,
+    );
     const combined1 = Buffer.concat([Buffer.from(iv1), Buffer.from(cipher1)]);
     const decrypted1 = await aes.decrypt(combined1, password, salt, iterations);
 
     // Encrypt/decrypt second time
-    const { iv: iv2, cipher: cipher2 } = await aes.encrypt(plaintext, password, salt, iterations);
+    const { iv: iv2, cipher: cipher2 } = await aes.encrypt(
+      plaintext,
+      password,
+      salt,
+      iterations,
+    );
     const combined2 = Buffer.concat([Buffer.from(iv2), Buffer.from(cipher2)]);
     const decrypted2 = await aes.decrypt(combined2, password, salt, iterations);
 
