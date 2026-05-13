@@ -7,8 +7,8 @@
     "tumba": "bin/index.js"
   },
   "scripts": {
-    "prettier": "npx prettier bin lib --check",
-    "lint": "npx eslint bin lib",
+    "prettier": "npx prettier bin lib tests --check",
+    "lint": "npx eslint bin lib tests",
     "format": "npm run lint -- --fix && npm run prettier -- --write",
     "test": "vitest"
   },
