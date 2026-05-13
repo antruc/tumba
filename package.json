@@ -35,6 +35,12 @@
     "Webcrypto",
     "CLI"
   ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "bin/",
+    "lib/"
+  ],
   "homepage": "https://github.com/antruc/tumba#readme",
   "repository": {
     "type": "git",
