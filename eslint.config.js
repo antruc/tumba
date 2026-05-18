@@ -1,6 +1,6 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import prettier from 'eslint-config-prettier'
+import js from '@eslint/js';
+import globals from 'globals';
+import prettier from 'eslint-config-prettier';
 
 export default [
   js.configs.recommended,
@@ -10,8 +10,8 @@ export default [
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
-        ...globals.node
-      }
-    }
-  }
-]
+        ...globals.node,
+      },
+    },
+  },
+];
