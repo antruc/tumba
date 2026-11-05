@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 import meow from 'meow';
-import { existsSync, lstatSync } from 'node:fs';
+import { statSync } from 'node:fs';
 import path from 'node:path';
 import inquirer from 'inquirer';
-import tumba from '../lib/tumba.js';
+import tumba, { MAX_ITERATIONS } from '../lib/tumba.js';
 
 // New files store their iteration count. Legacy files (no header) fall back to
 // this when decrypting without an explicit -i.
 const LEGACY_ITERATIONS = 100000;
 const DEFAULT_ITERATIONS = 600000;
+const MIN_ENCRYPT_ITERATIONS = 100000;
 
 const cli = meow(
   `
@@ -29,117 +30,94 @@ const cli = meow(
   {
     importMeta: import.meta,
     flags: {
-      encrypt: {
-        type: 'string',
-        shortFlag: 'e',
-      },
-      decrypt: {
-        type: 'string',
-        shortFlag: 'd',
-      },
-      iterations: {
-        type: 'number',
-        shortFlag: 'i',
-      },
-      outDir: {
-        type: 'string',
-        shortFlag: 'o',
-        default: '',
-      },
+      encrypt: { type: 'string', shortFlag: 'e' },
+      decrypt: { type: 'string', shortFlag: 'd' },
+      iterations: { type: 'number', shortFlag: 'i' },
+      outDir: { type: 'string', shortFlag: 'o', default: '' },
     },
   },
 );
 
-// Check if the necessary flags are set and if there is a valid input
-if (Object.hasOwn(cli.flags, 'encrypt') && cli.flags.encrypt.length > 0) {
-  // Check if path exist
-  const pathExist = existsSync(cli.flags.encrypt);
-  if (pathExist) {
-    // Check if path is a file
-    const isFile = lstatSync(cli.flags.encrypt).isFile();
-    if (isFile) {
-      inquirer
-        .prompt([
-          {
-            message: 'Password:',
-            name: 'password',
-            type: 'password',
-            mask: true,
-          },
-          {
-            message: 'Confirm password:',
-            name: 'confirm',
-            type: 'password',
-            mask: true,
-          },
-        ])
-        .then((answer) => {
-          if (answer.password.length === 0) {
-            console.log('Error: Password length must be greater than zero');
-          } else if (answer.password !== answer.confirm) {
-            console.log('Error: Passwords do not match');
-          } else {
-            tumba.encrypt(
-              cli.flags.encrypt,
-              answer.password,
-              cli.flags.iterations ?? DEFAULT_ITERATIONS,
-              cli.flags.outDir,
-            );
-          }
-        });
-    } else {
-      console.log('Error: Path must be a file');
-    }
-  } else {
-    console.log('Error: File does not exist');
-  }
-} else if (
-  Object.hasOwn(cli.flags, 'decrypt') &&
-  cli.flags.decrypt.length > 0
-) {
-  const pathExist = existsSync(cli.flags.decrypt);
-  if (pathExist) {
-    const isFile = lstatSync(cli.flags.decrypt).isFile();
-    if (isFile) {
-      // Check the real extension is '.tumba'
-      if (path.extname(cli.flags.decrypt) === '.tumba') {
-        inquirer
-          .prompt([
-            {
-              message: 'Password:',
-              name: 'password',
-              type: 'password',
-              mask: true,
-            },
-          ])
-          .then((answer) => {
-            // Decrypt file. Iterations only used for legacy files.
-            tumba.decrypt(
-              cli.flags.decrypt,
-              answer.password,
-              cli.flags.iterations ?? LEGACY_ITERATIONS,
-              cli.flags.outDir,
-            );
-          });
-      } else {
-        console.log('Error: File must be encrypted');
-      }
-    } else {
-      console.log('Error: Path must be a file');
-    }
-  } else {
-    console.log('Error: File does not exist');
-  }
-} else {
-  // Else show help message
-  console.log(cli.help);
-}
+const { encrypt, decrypt, iterations, outDir } = cli.flags;
 
-// Show message if process is terminated
-process.on('uncaughtException', (error) => {
-  if (error instanceof Error && error.name === 'ExitPromptError') {
-    console.log('Process cancelled');
+const passwordPrompt = (name, message) => ({
+  name,
+  message,
+  type: 'password',
+  mask: true,
+});
+
+const checkFile = (file) => {
+  const stat = statSync(file, { throwIfNoEntry: false });
+  if (!stat) throw new Error('File does not exist');
+  if (!stat.isFile()) throw new Error('Path must be a file');
+};
+
+const checkIterations = (min) => {
+  if (
+    iterations !== undefined &&
+    !(
+      Number.isInteger(iterations) &&
+      iterations >= min &&
+      iterations <= MAX_ITERATIONS
+    )
+  ) {
+    throw new Error(
+      `Iterations must be an integer from ${min} to ${MAX_ITERATIONS}`,
+    );
+  }
+};
+
+const run = async () => {
+  if (encrypt) {
+    checkFile(encrypt);
+    checkIterations(MIN_ENCRYPT_ITERATIONS);
+    const { password, confirm } = await inquirer.prompt([
+      passwordPrompt('password', 'Password:'),
+      passwordPrompt('confirm', 'Confirm password:'),
+    ]);
+    if (password.length === 0) {
+      throw new Error('Password length must be greater than zero');
+    }
+    if (password !== confirm) throw new Error('Passwords do not match');
+
+    const outPath = await tumba.encrypt(
+      encrypt,
+      password,
+      iterations ?? DEFAULT_ITERATIONS,
+      outDir,
+    );
+    console.log('File encrypted successfully');
+    console.log(`${outPath} created`);
+  } else if (decrypt) {
+    checkFile(decrypt);
+    if (path.extname(decrypt) !== '.tumba') {
+      throw new Error('File must be encrypted');
+    }
+    checkIterations(1);
+    const { password } = await inquirer.prompt([
+      passwordPrompt('password', 'Password:'),
+    ]);
+
+    const outPath = await tumba.decrypt(
+      decrypt,
+      password,
+      iterations ?? LEGACY_ITERATIONS,
+      outDir,
+    );
+    console.log('File decrypted successfully');
+    console.log(`${outPath} created`);
   } else {
-    throw error;
+    console.log(cli.help);
+  }
+};
+
+run().catch((error) => {
+  if (error.name === 'ExitPromptError') {
+    console.log('Process cancelled');
+    process.exitCode = 130;
+  } else {
+    console.error(`Error: ${error.message}`);
+    process.exitCode = 1;
   }
 });
