@@ -20,7 +20,7 @@ Usage
   Options
     --encrypt, -e  Encrypt a file from disk
     --decrypt, -d  Decrypt a file to disk
-    --iterations, -i  Number of iterations (Default: 100000)
+    --iterations, -i  PBKDF2 iterations (encrypt default: 600000, stored in file)
     --outDir, -o  Output directory (Optional)
 
   Examples
