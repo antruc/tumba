@@ -17,10 +17,11 @@ const cli = meow(
     $ tumba -option <input>
 
   Options
-    --encrypt, -e  Encrypt a file from disk
-    --decrypt, -d  Decrypt a file to disk
-    --iterations, -i  PBKDF2 iterations (encrypt default: 600000, stored in file)
-    --outDir, -o  Output directory (Optional)
+    --encrypt, -e     Encrypt a file from disk
+    --decrypt, -d     Decrypt a file to disk
+    --iterations, -i  PBKDF2 iterations (default: 600000,
+                      stored in the encrypted file)
+    --outDir, -o      Output directory (optional)
 
   Examples
     $ tumba -e file1.png
