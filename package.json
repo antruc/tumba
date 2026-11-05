@@ -10,7 +10,7 @@
     "prettier": "npx prettier bin lib tests *.config.js --check",
     "lint": "npx eslint bin lib tests *.config.js",
     "format": "npm run lint -- --fix && npm run prettier -- --write",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "dependencies": {
     "file-type": "^22.0.1",
