@@ -1,8 +1,14 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 import meow from 'meow';
 import { existsSync, lstatSync } from 'node:fs';
+import path from 'node:path';
 import inquirer from 'inquirer';
 import tumba from '../lib/tumba.js';
+
+// New files store their iteration count. Legacy files (no header) fall back to
+// this when decrypting without an explicit -i.
+const LEGACY_ITERATIONS = 100000;
+const DEFAULT_ITERATIONS = 600000;
 
 const cli = meow(
   `
@@ -12,7 +18,7 @@ const cli = meow(
   Options
     --encrypt, -e  Encrypt a file from disk
     --decrypt, -d  Decrypt a file to disk
-    --iterations, -i  Number of iterations (Default: 100000)
+    --iterations, -i  PBKDF2 iterations (encrypt default: 600000, stored in file)
     --outDir, -o  Output directory (Optional)
 
   Examples
@@ -34,7 +40,6 @@ const cli = meow(
       iterations: {
         type: 'number',
         shortFlag: 'i',
-        default: 100000,
       },
       outDir: {
         type: 'string',
@@ -61,19 +66,25 @@ if (Object.hasOwn(cli.flags, 'encrypt') && cli.flags.encrypt.length > 0) {
             type: 'password',
             mask: true,
           },
+          {
+            message: 'Confirm password:',
+            name: 'confirm',
+            type: 'password',
+            mask: true,
+          },
         ])
         .then((answer) => {
-          // Check if password string is not empty
-          if (answer.password.length > 0) {
-            // Encrypt file
+          if (answer.password.length === 0) {
+            console.log('Error: Password length must be greater than zero');
+          } else if (answer.password !== answer.confirm) {
+            console.log('Error: Passwords do not match');
+          } else {
             tumba.encrypt(
               cli.flags.encrypt,
               answer.password,
-              cli.flags.iterations,
+              cli.flags.iterations ?? DEFAULT_ITERATIONS,
               cli.flags.outDir,
             );
-          } else {
-            console.log('Error: Password length must be greater than zero');
           }
         });
     } else {
@@ -90,8 +101,8 @@ if (Object.hasOwn(cli.flags, 'encrypt') && cli.flags.encrypt.length > 0) {
   if (pathExist) {
     const isFile = lstatSync(cli.flags.decrypt).isFile();
     if (isFile) {
-      // Check if file includes '.tumba'
-      if (cli.flags.decrypt.includes('.tumba')) {
+      // Check the real extension is '.tumba'
+      if (path.extname(cli.flags.decrypt) === '.tumba') {
         inquirer
           .prompt([
             {
@@ -102,11 +113,11 @@ if (Object.hasOwn(cli.flags, 'encrypt') && cli.flags.encrypt.length > 0) {
             },
           ])
           .then((answer) => {
-            // Decrypt file
+            // Decrypt file. Iterations only used for legacy files.
             tumba.decrypt(
               cli.flags.decrypt,
               answer.password,
-              cli.flags.iterations,
+              cli.flags.iterations ?? LEGACY_ITERATIONS,
               cli.flags.outDir,
             );
           });
