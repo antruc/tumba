@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import aes from '../lib/aes.js';
-import { TextEncoder, TextDecoder } from 'util';
-import { Buffer } from 'node:buffer';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
