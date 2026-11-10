@@ -17,7 +17,7 @@ decrypts it back. You type the password at a prompt, and the original file
 stays untouched:
 
 ```
-$ tumba -e tax-return-2026.pdf
+$ tumba -e secrets.pdf
 ? Password: ********
 ? Confirm password: ********
 File encrypted successfully
