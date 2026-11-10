@@ -5,7 +5,7 @@ PBKDF2 key, the original file name hidden inside the ciphertext, and nothing
 ever overwritten**
 
 [![npm](https://img.shields.io/npm/v/tumba)](https://www.npmjs.com/package/tumba)
-![Node 20.19+](https://img.shields.io/badge/node-20.19%2B-339933?logo=nodedotjs&logoColor=white)
+![Node 22+](https://img.shields.io/badge/node-22%2B-339933?logo=nodedotjs&logoColor=white)
 ![WebCrypto](https://img.shields.io/badge/crypto-WebCrypto-orange)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
@@ -58,6 +58,9 @@ password used to create it
   format version is encrypted too, so nothing about the file leaks in clear
 - **Never overwrites:** decrypting next to a file with the same name stops
   with an error instead of replacing it
+- **Careful writes:** output files are created readable by their owner only
+  (mode `600` on Linux and macOS), and a write that fails midway (disk full)
+  leaves no partial file behind
 - **No third-party crypto:** encryption runs on Node's built-in WebCrypto
   (`crypto.subtle`, backed by Node's own OpenSSL). The three runtime
   dependencies (flags, password prompt, file type detection for legacy files)
@@ -67,7 +70,7 @@ password used to create it
 
 ## Installing
 
-Requires [Node.js](https://nodejs.org) 20.19.1 or later
+Requires [Node.js](https://nodejs.org) 22 or later
 
 ```bash
 npm install -g tumba
@@ -112,6 +115,7 @@ Examples
 - `-i` accepts 100,000 to 10,000,000 when encrypting. When decrypting it is
   only needed for files made by tumba 1.0.x, which did not store the count
   (they used 100,000)
+- `-e` and `-d` cannot be combined in one run
 - `Ctrl+C` at the prompt cancels with exit code 130. Any error exits with 1
 
 ## How it works
@@ -144,7 +148,11 @@ Inside the ciphertext:
 The version marker lives inside the ciphertext and is checked only after a
 successful decrypt, so nothing about the version or the contents leaks in
 clear. The decrypted name is reduced to its base name, so a crafted file
-cannot write outside the output folder
+cannot write outside the output folder. On Windows, characters the file
+system rejects or treats specially (`< > : " | ? *` and control characters)
+are replaced with `_`, so a file encrypted on Linux as `a:b.txt` comes back
+as `a_b.txt`. An empty or unusable name falls back to the `.tumba` file's
+own name
 
 Files without `SIGNATURE` are read as the 1.0.x format (`salt + iv + cipher`,
 no stored name). Their extension is guessed from the content with
@@ -153,7 +161,9 @@ no stored name). Their extension is guessed from the content with
 ## Known limitations
 
 - **Memory:** the whole file is held in memory, because WebCrypto AES-GCM has
-  no streaming API. Files near 2 GB fail to read
+  no streaming API. Files near 2 GB fail to read, and peak memory use is
+  several times the file size, so expect to need about 4 GB of free RAM for
+  a 1 GB file
 - **One file at a time:** to encrypt a folder, zip it first
 - **No password recovery:** a forgotten password means the file is gone. That
   is the point
@@ -174,7 +184,7 @@ npm run format       # fix lint and format
 | [bin/index.js](bin/index.js) | CLI: flags, password prompts, input checks, exit codes |
 | [lib/tumba.js](lib/tumba.js) | File format: header, embedded name, legacy files, safe writes |
 | [lib/aes.js](lib/aes.js) | PBKDF2 key derivation and AES-GCM encrypt/decrypt |
-| [tests/](tests/) | Round trips, tampering, wrong password, no-overwrite, legacy format |
+| [tests/](tests/) | Round trips, tampering, wrong password, no-overwrite, crafted names, legacy format |
 
 ## License
 

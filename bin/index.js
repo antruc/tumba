@@ -2,7 +2,7 @@
 import meow from 'meow';
 import { statSync } from 'node:fs';
 import path from 'node:path';
-import inquirer from 'inquirer';
+import passwordPrompt from '@inquirer/password';
 import tumba, { MAX_ITERATIONS } from '../lib/tumba.js';
 
 // New files store their iteration count. Legacy files (no header) fall back to
@@ -41,12 +41,7 @@ const cli = meow(
 
 const { encrypt, decrypt, iterations, outDir } = cli.flags;
 
-const passwordPrompt = (name, message) => ({
-  name,
-  message,
-  type: 'password',
-  mask: true,
-});
+const askPassword = (message) => passwordPrompt({ message, mask: true });
 
 const checkFile = (file) => {
   const stat = statSync(file, { throwIfNoEntry: false });
@@ -70,13 +65,14 @@ const checkIterations = (min) => {
 };
 
 const run = async () => {
+  if (encrypt && decrypt) {
+    throw new Error('Use either --encrypt or --decrypt, not both');
+  }
   if (encrypt) {
     checkFile(encrypt);
     checkIterations(MIN_ENCRYPT_ITERATIONS);
-    const { password, confirm } = await inquirer.prompt([
-      passwordPrompt('password', 'Password:'),
-      passwordPrompt('confirm', 'Confirm password:'),
-    ]);
+    const password = await askPassword('Password:');
+    const confirm = await askPassword('Confirm password:');
     if (password.length === 0) {
       throw new Error('Password length must be greater than zero');
     }
@@ -96,9 +92,7 @@ const run = async () => {
       throw new Error('File must be encrypted');
     }
     checkIterations(1);
-    const { password } = await inquirer.prompt([
-      passwordPrompt('password', 'Password:'),
-    ]);
+    const password = await askPassword('Password:');
 
     const outPath = await tumba.decrypt(
       decrypt,

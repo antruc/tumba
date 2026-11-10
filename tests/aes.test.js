@@ -69,30 +69,18 @@ describe('AES module', () => {
     expect(result1.iv).not.toEqual(result2.iv);
   });
 
-  it('should produce consistent decryption with same inputs', async () => {
-    const plaintext = encoder.encode('test message');
-
-    // Encrypt/decrypt first time
-    const { iv: iv1, cipher: cipher1 } = await aes.encrypt(
-      plaintext,
+  it('should fail decryption when a cipher byte changes', async () => {
+    const { iv, cipher } = await aes.encrypt(
+      encoder.encode('secret'),
       password,
       salt,
       iterations,
     );
-    const combined1 = Buffer.concat([Buffer.from(iv1), Buffer.from(cipher1)]);
-    const decrypted1 = await aes.decrypt(combined1, password, salt, iterations);
+    cipher[0] ^= 1;
+    const combined = Buffer.concat([Buffer.from(iv), Buffer.from(cipher)]);
 
-    // Encrypt/decrypt second time
-    const { iv: iv2, cipher: cipher2 } = await aes.encrypt(
-      plaintext,
-      password,
-      salt,
-      iterations,
-    );
-    const combined2 = Buffer.concat([Buffer.from(iv2), Buffer.from(cipher2)]);
-    const decrypted2 = await aes.decrypt(combined2, password, salt, iterations);
-
-    expect(decoder.decode(decrypted1)).toBe('test message');
-    expect(decoder.decode(decrypted2)).toBe('test message');
+    await expect(
+      aes.decrypt(combined, password, salt, iterations),
+    ).rejects.toThrow();
   });
 });

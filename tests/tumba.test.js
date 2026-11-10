@@ -63,6 +63,66 @@ describe('tumba file format', () => {
     );
   });
 
+  it('rejects a file with a changed cipher byte', async () => {
+    const enc = await encryptSample();
+    const file = await readFile(enc);
+    file[file.length - 20] ^= 1;
+    await writeFile(enc, file);
+    await expect(tumba.decrypt(enc, password, 0, dir)).rejects.toThrow(
+      'corrupted',
+    );
+  });
+
+  it('keeps crafted embedded names inside the output folder', async () => {
+    // Build a valid container whose embedded name is hostile.
+    const craft = async (name, id) => {
+      const nameBuf = Buffer.from(name);
+      const nameLen = Buffer.alloc(2);
+      nameLen.writeUInt16BE(nameBuf.length);
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const { iv, cipher } = await aes.encrypt(
+        Buffer.concat([
+          Buffer.from('TMB1'),
+          nameLen,
+          nameBuf,
+          Buffer.from('x'),
+        ]),
+        password,
+        salt,
+        iterations,
+      );
+      const iterBuf = Buffer.alloc(4);
+      iterBuf.writeUInt32BE(iterations);
+      const file = path.join(dir, `${id}.tumba`);
+      await writeFile(
+        file,
+        Buffer.concat([
+          Buffer.from([0x7f, 0x54, 0x4d, 0x42]),
+          iterBuf,
+          salt,
+          iv,
+          cipher,
+        ]),
+      );
+      return file;
+    };
+    const out = path.join(dir, 'out');
+    const restore = async (name, id) =>
+      path.relative(
+        out,
+        await tumba.decrypt(await craft(name, id), password, 0, out),
+      );
+
+    expect(await restore('../../evil.txt', 'a')).toBe('evil.txt');
+    // Unusable names fall back to the container name.
+    expect(await restore('..', 'b')).toBe('b');
+    expect(await restore('', 'c')).toBe('c');
+    if (process.platform === 'win32') {
+      expect(await restore('note.txt:ads', 'd')).toBe('note.txt_ads');
+      expect(await restore('a?b.txt', 'e')).toBe('a_b.txt');
+    }
+  });
+
   it('decrypts legacy files with the given iterations', async () => {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const { iv, cipher } = await aes.encrypt(
