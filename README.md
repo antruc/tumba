@@ -26,7 +26,7 @@ File encrypted successfully
 $ tumba -d 3f9a1c07be.tumba
 ? Password: ********
 File decrypted successfully
-tax-return-2026.pdf created
+secrets.pdf created
 ```
 
 **What is a `.tumba` file?** The encrypted file tumba produces. It gets a
